@@ -30,3 +30,18 @@ SELECT DropGeoTable('x');
 SELECT DropGeoTable('y');
 
 -- https://stackoverflow.com/questions/23785143/need-help-adding-random-float-in-sqlite/23785593#23785593
+
+-- creo SpatialIndex
+SELECT 'Creazione indice spaziale su ', 'point','geom',
+coalesce(checkspatialindex('point','geom'),CreateSpatialIndex('point','geom'));
+SELECT 'Creazione indice spaziale su ', 'poly','geom',
+coalesce(checkspatialindex('poly','geom'),CreateSpatialIndex('poly','geom'));
+
+-- creo tabella clippata e assegnare cir_id ai punti circa 8 sec
+CREATE TABLE point_cir_id AS
+SELECT pt.*,pl."cir_id"
+FROM poly pl, point pt
+WHERE ST_Intersects (pl.geom, pt.geom) = 1 AND pt.rowid IN (SELECT rowid 
+			FROM SpatialIndex 
+			WHERE f_table_name = 'point' AND search_frame = pl.geom);
+SELECT RecoverGeometryColumn('point_clip', 'geom',4326, 'POINT', 'XY');
